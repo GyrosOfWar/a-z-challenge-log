@@ -1,0 +1,7 @@
+@(loggedIn: Boolean, errorMessage: Option[String] = None, successMessage: Option[String] = None, warningMessage: Option[String] = None)
+
+@main("A to Z challenge", loggedIn) {
+    @if(errorMessage.isDefined) { <p class="alert alert-danger">@errorMessage.get</p> }
+    @if(warningMessage.isDefined) { <p class="alert alert-warning">@warningMessage.get</p> }
+    @if(successMessage.isDefined) { <p class="alert alert-success">@successMessage.get</p> }
+}

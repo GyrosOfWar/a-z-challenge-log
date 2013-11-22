@@ -1,0 +1,8 @@
+@(user: User)
+
+@main("Profile", loggedIn = true) {
+    <h1>Welcome, @user.friendlyName</h1>
+    @for(game <- user.games) {
+        <p>Match ID: @game.matchId, <img src="@game.hero.imageUrl" height="50px" /> Time: @game.date</p>
+    }
+}

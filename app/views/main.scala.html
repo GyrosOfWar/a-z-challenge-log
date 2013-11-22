@@ -1,0 +1,74 @@
+@(title: String, loggedIn: Boolean)(content: Html)
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>@title</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <!-- Bootstrap -->
+        <link href="@routes.Assets.at("stylesheets/bootstrap.min.css")" rel="stylesheet" media="screen" />
+        <link href="@routes.Assets.at("stylesheets/custom.css")" rel="stylesheet" media="screen" />
+
+
+            <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+            <!--[if lt IE 9]>
+        <script src="../../passets/js/html5shiv.js"></script>
+        <script src="../../assets/js/respond.min.js"></script>
+      <![endif]-->
+    </head>
+    <body>
+        <div id="wrap">
+            <div class="navbar navbar-default navbar-fixed-top">
+                <div class="container">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="@routes.Application.index">@Messages("main.title")</a>
+                    </div> <!-- Navbar header -->
+
+                    <div class="navbar-collapse collapse">
+                        <ul class="nav navbar-nav">
+                            <li>
+                                <a href="@routes.Restricted.profile">Profile</a>
+                            </li>
+
+                        </ul> <!-- list for navbar items -->
+
+                        <div class="nav navbar-nav navbar-right">
+                            <ul class="nav navbar-nav">
+                                @if(!loggedIn) {
+                                    <li>
+                                        <a href="@routes.Authentication.login">
+                                            <img src="http://cdn.steamcommunity.com/public/images/signinthroughsteam/sits_small.png"
+                                        </a>
+                                    </li>
+                                }
+                                @if(loggedIn) {
+                                    <li><a href="@routes.Authentication.logout">Sign out</a></li>
+                                }
+                            </ul>
+                        </div> <!-- Navbar right -->
+                    </div> <!-- Navbar collapse -->
+                </div> <!-- Navbar container -->
+            </div> <!-- Navbar outer -->
+
+            <div class="container">
+            @content
+            </div> <!-- Container -->
+        </div> <!-- Wrap -->
+        <div id="footer">
+            <div class="container">
+               <p class="text-right text-muted credit"><a href="http://steampowered.com ">Powered by Steam</a></p>
+            </div>
+        </div>
+
+            <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script src="//code.jquery.com/jquery.js"></script>
+            <!-- Include all compiled plugins (below), or include individual files as needed -->
+        <script src="@routes.Assets.at("javascripts/bootstrap.min.js")"></script>
+    </body>
+</html>
