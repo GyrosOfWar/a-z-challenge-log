@@ -9,7 +9,6 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsObject
 import util.Profiling.timedCall
 
-
 /**
  * User: werner
  * Date: 21.11.13
@@ -68,7 +67,7 @@ object Game {
               case (accId, heroId) if accId == myId => heroId
             }.head
             val hero = Hero.getForId(id).getOrElse(throw new IllegalArgumentException("Bad hero!"))
-            Game(matchId, new DateTime(startTime), hero)
+            Game(matchId, new DateTime(startTime * 1000L), hero)
           }
         }
     }
