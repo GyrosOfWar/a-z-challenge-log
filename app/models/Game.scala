@@ -14,7 +14,7 @@ import util.Profiling.timedCall
  * Date: 21.11.13
  * Time: 15:11
  */
-case class Game(matchId: Long, date: DateTime, hero: Hero) extends Table[(Long, Int, Long)]("GAMES") {
+case class Game(matchId: Long, date: DateTime, hero: Hero, details: MatchDetails) extends Table[(Long, Int, Long)]("GAMES") {
   def matchIdCol = column[Long]("MATCH_ID")
 
   def dateCol = column[Long]("DATE")
@@ -27,14 +27,40 @@ case class Game(matchId: Long, date: DateTime, hero: Hero) extends Table[(Long, 
   def * = matchIdCol ~ heroIdCol ~ dateCol
 }
 
+case class MatchDetails(radiantWon: Boolean, kills: Int, deaths: Int, assists: Int, gpm: Int, xpm: Int)
+
 object Game {
-  def getGamesFor(steamId32: String): Future[Seq[Game]] = {
+
+  def matchDetails(matchId: Long, steamId32: Int): Future[MatchDetails] = {
+    val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/V001/?key=${Application.SteamApiKey}&match_id=$matchId"
+    // TODO Fetch match details to find out the winner of the game
+    val request = WS.url(url)
+    val future = request.get()
+
+    future map {
+      r =>
+        val json = r.json \ "result"
+        val radiantWon = (json \ "radiant_win").as[Boolean]
+        val players = (json \ "players").as[List[JsObject]]
+        val player =
+          (for {p <- players if (p \ "account_id").as[Int] == steamId32}
+          yield p).head
+        val kills = (player \ "kills").as[Int]
+        val deaths = (player \ "deaths").as[Int]
+        val assists = (player \ "assists").as[Int]
+        val gpm = (player \ "gold_per_min").as[Int]
+        val xpm = (player \ "xp_per_min").as[Int]
+        MatchDetails(radiantWon, kills, deaths, assists, gpm, xpm)
+    }
+  }
+
+  def getGamesFor(steamId32: Int): Future[Seq[Game]] = {
     val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/V001/?key=${Application.SteamApiKey}&account_id=$steamId32"
     val request = WS.url(url)
     val future = request.get()
-    val myId = steamId32.toInt
+    val myId = steamId32
 
-    future map {
+    future flatMap {
       v =>
         timedCall("getGamesFor") {
           val json = v.json \ "result"
@@ -58,7 +84,7 @@ object Game {
           val matchTuples = matchIds.zip(startTimes)
           val playerTuples = accountIds.zip(heroIds)
 
-          for (i <- 0 until matchTuples.length) yield {
+          val ms = for (i <- 0 until matchTuples.length) yield {
             val (matchId, startTime) = matchTuples(i)
             val start = i * 10
             val end = start + 10
@@ -67,8 +93,12 @@ object Game {
               case (accId, heroId) if accId == myId => heroId
             }.head
             val hero = Hero.getForId(id).getOrElse(throw new IllegalArgumentException("Bad hero!"))
-            Game(matchId, new DateTime(startTime * 1000L), hero)
+            val details = matchDetails(matchId, myId)
+
+            details map { d => Game(matchId, new DateTime(startTime * 1000l), hero, d) }
           }
+
+          Future.sequence(ms) map { _.toSeq }
         }
     }
   }

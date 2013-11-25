@@ -70,7 +70,7 @@ object Authentication extends Controller {
           val steamId32 = (steamId64 - 76561197960265728L).toInt
           logger.debug(s"id url: $userUrl, steamID64: $steamId64, steamId32: $steamId32")
           val user = User.create(steamId64, steamId32)
-          val games = Game.getGamesFor(steamId32.toString)
+          val games = Game.getGamesFor(steamId32)
           games onComplete {
             case Success(result) =>
               user.addGames(result)

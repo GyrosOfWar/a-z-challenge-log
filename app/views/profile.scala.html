@@ -2,7 +2,22 @@
 
 @main("Profile", loggedIn = true) {
     <h1>Welcome, @user.friendlyName</h1>
-    @for(game <- user.games) {
-        <p>Match ID: @game.matchId, <img src="@game.hero.imageUrl" height="50px" /> Time: @game.date</p>
-    }
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Hero</th>
+                <th>K/D/A</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+        @for(game <- user.games) {
+            <tr>
+                <td><img src="@game.hero.imageUrl" height="35px"/> @game.hero.name</td>
+                <td>@game.details.kills / @game.details.deaths / @game.details.assists</td>
+                <td>@game.date.toLocalDate</td>
+            </tr>
+        }
+        </tbody>
+    </table>
 }
