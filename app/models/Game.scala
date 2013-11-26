@@ -53,7 +53,7 @@ object Game {
         MatchDetails(radiantWon, kills, deaths, assists, gpm, xpm)
     }
   }
-
+  // TODO add parameters for start/end date or start/end match id and number of games to fetch
   def getGamesFor(steamId32: Int): Future[Seq[Game]] = {
     val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/V001/?key=${Application.SteamApiKey}&account_id=$steamId32"
     val request = WS.url(url)

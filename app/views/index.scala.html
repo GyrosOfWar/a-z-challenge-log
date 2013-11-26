@@ -1,6 +1,18 @@
 @(loggedIn: Boolean, errorMessage: Option[String] = None, successMessage: Option[String] = None, warningMessage: Option[String] = None)
 
 @main("A to Z challenge", loggedIn) {
+    <h1 class="h1">A-Z challenge log</h1>
+    <p>
+        Track your progress in the Dota 2 A-Z challenge.
+        Just log in with your Steam account (I won't steal your data, I promise!)
+        and get started.
+    </p>
+    <h2>What is the A-Z challenge?</h2>
+    <p>
+        Starting with the first hero in the alphabet, currently Abbadon, you play each hero in
+        alphabetical order until you win one game with him, only then do you move on.
+        @*TODO nice illustration or something*@
+    </p>
     @if(errorMessage.isDefined) { <p class="alert alert-danger">@errorMessage.get</p> }
     @if(warningMessage.isDefined) { <p class="alert alert-warning">@warningMessage.get</p> }
     @if(successMessage.isDefined) { <p class="alert alert-success">@successMessage.get</p> }

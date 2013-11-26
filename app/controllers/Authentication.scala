@@ -55,7 +55,6 @@ object Authentication extends Controller {
             result.put(a, value)
             //logger.info(a + "=" + value)
           }
-          //src.transform(value => value.asInstanceOf[String[]]);
           result
         }
         val response = new ParameterList(convert(p))

@@ -6,7 +6,9 @@
         <thead>
             <tr>
                 <th>Hero</th>
-                <th>K/D/A</th>
+                <th>K / D / A</th>
+                <th>GPM</th>
+                <th>XPM</th>
                 <th>Date</th>
             </tr>
         </thead>
@@ -15,6 +17,8 @@
             <tr>
                 <td><img src="@game.hero.imageUrl" height="35px"/> @game.hero.name</td>
                 <td>@game.details.kills / @game.details.deaths / @game.details.assists</td>
+                <td>@game.details.gpm</td>
+                <td>@game.details.xpm</td>
                 <td>@game.date.toLocalDate</td>
             </tr>
         }

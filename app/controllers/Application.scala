@@ -13,6 +13,7 @@ object Application extends Controller {
 
   def index = Action {
     implicit request =>
+      // Make sure there is no junk stored in the username variable
       val userId = session.get(Security.username) match {
         case Some(id) if id(0).isDigit => id.toInt
         case _ => 0
