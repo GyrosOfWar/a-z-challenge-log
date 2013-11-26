@@ -16,15 +16,15 @@ import util.Util.zip3
  * Date: 21.11.13
  * Time: 15:11
  */
-case class Game(matchId: Long, date: DateTime, hero: Hero, details: MatchDetails, win: Boolean) extends Table[(Long, Int, Long)]("GAMES") {
+
+case class Game(matchId: Long, date: DateTime, hero: Hero, details: MatchDetails, win: Boolean)
+
+case class Games() extends Table[(Long, Int, Long)]("GAMES") {
   def matchIdCol = column[Long]("MATCH_ID")
 
   def dateCol = column[Long]("DATE")
 
   def heroIdCol = column[Int]("HERO_ID")
-
-  // FIXME
-  //def heroFK = foreignKey("HERO_FK", heroIdCol, Hero)(_.)
 
   def * = matchIdCol ~ heroIdCol ~ dateCol
 }

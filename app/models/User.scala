@@ -12,25 +12,15 @@ import concurrent.duration._
  * Date: 10/8/13
  * Time: 2:43 PM
  */
-//case class User(username: String, passwordHash: HashSaltPair, email: String, matches: List[Game], id: Option[Long] = None)
-case class User(steamId64: Long, steamId32: Int, friendlyName: String) extends Table[User]("USERS") {
+
+case class User(steamId64: Long, steamId32: Int, friendlyName: String) {
   private var _games = Vector.empty[Game]
 
   def hasGames = !_games.isEmpty
 
   var loggedIn = false
 
-  def id64 = column[Long]("U_ID64", O.PrimaryKey)
-
-  def id32 = column[Int]("U_ID32")
-
-  //def games = foreignKey("MATCH_ID", id, Game)(g: Game => g.)
-
   def games = _games
-
-  def friendlyNameCol = column[String]("U_NAME")
-
-  def * = id64 ~ id32 ~ friendlyNameCol <>(User.apply _, User.unapply _)
 
   def addGame(g: Game) {
     _games = _games :+ g
@@ -39,6 +29,19 @@ case class User(steamId64: Long, steamId32: Int, friendlyName: String) extends T
   def addGames(gs: Seq[Game]) {
     _games = _games ++ gs
   }
+}
+
+case class Users() extends Table[User]("USERS") {
+  def id64 = column[Long]("U_ID64", O.PrimaryKey)
+
+  def id32 = column[Int]("U_ID32")
+
+  //def games = foreignKey("MATCH_ID", id, Game)(g: Game => g.)
+
+  def friendlyNameCol = column[String]("U_NAME")
+
+  def * = id64 ~ id32 ~ friendlyNameCol <>(User.apply _, User.unapply _)
+
 }
 
 // TODO foreign key in Games

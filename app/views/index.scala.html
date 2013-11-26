@@ -1,6 +1,9 @@
 @(loggedIn: Boolean, errorMessage: Option[String] = None, successMessage: Option[String] = None, warningMessage: Option[String] = None)
 
 @main("A to Z challenge", loggedIn) {
+    @if(errorMessage.isDefined) { <p class="alert alert-danger">@errorMessage.get</p> }
+    @if(warningMessage.isDefined) { <p class="alert alert-warning">@warningMessage.get</p> }
+    @if(successMessage.isDefined) { <p class="alert alert-success">@successMessage.get</p> }
     <h1 class="h1">A-Z challenge log</h1>
     <p>
         Track your progress in the Dota 2 A-Z challenge.
@@ -13,7 +16,4 @@
         If your hero gets picked or randomed before you can pick him, you pick the next hero in line and go back to your original
         hero the next game.
     </p>
-    @if(errorMessage.isDefined) { <p class="alert alert-danger">@errorMessage.get</p> }
-    @if(warningMessage.isDefined) { <p class="alert alert-warning">@warningMessage.get</p> }
-    @if(successMessage.isDefined) { <p class="alert alert-success">@successMessage.get</p> }
 }

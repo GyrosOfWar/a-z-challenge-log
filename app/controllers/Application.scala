@@ -29,5 +29,6 @@ object Application extends Controller {
     import play.api.Play.current
     val fp = Play.getFile("conf/apiKey.txt")
     Files.readFile(fp)
+
   }
 }

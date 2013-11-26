@@ -1,18 +1,22 @@
 package models
 
-import collection.JavaConverters._
-import concurrent.Await
-import concurrent.duration._
 import controllers.Application
-import java.nio.charset.Charset
-import java.nio.file.{Paths, Files}
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.JsValue
 import play.api.libs.ws._
 import slick.driver.H2Driver.simple._
-
 import util.Util.zip3
+import scala.util.{Success, Failure}
+import play.api.Logger.logger
+import play.api.db.slick.DB
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.Play.current
+import scala.slick.session.Session
 
-case class Hero(id: Int, name: String, imageUrl: String) extends Table[Hero]("HEROES") with Ordered[Hero] {
+case class Hero(id: Int, name: String, imageUrl: String) extends Ordered[Hero] {
+  def compare(that: Hero): Int = this.name.compare(that.name)
+}
+
+case class Heroes() extends Table[Hero]("HEROES") {
   def idCol = column[Int]("HERO_ID")
 
   def nameCol = column[String]("HERO_NAME")
@@ -21,16 +25,11 @@ case class Hero(id: Int, name: String, imageUrl: String) extends Table[Hero]("HE
 
   def * = idCol ~ nameCol ~ imageUrlCol <>(Hero.apply _, Hero.unapply _)
 
-  def compare(that: Hero): Int = this.name.compare(that.name)
 }
 
 object Hero {
-  private var allHeroes: Seq[Hero] = Nil
-  private var fetchedFromApi = false
-  private var fetchedFromFile = false
-  // If true, reads the heroes.json file from classpath
-  private val EnableApiHeroes = true
-  private val ClasspathFileName = "heroes.json"
+  private var _inDb = false
+  val h = new Heroes
 
   private def parseJson(json: JsValue): Seq[Hero] = {
     val names = (json \\ "localized_name").map(_.as[String])
@@ -41,57 +40,48 @@ object Hero {
         "http://media.steampowered.com/apps/dota2/images/heroes/" + str.substring(14, str.length) + "_lg.png"
     }
 
-    // Drop the last hero (LC) because she's not released yet.
-    //val fetchedHeroes = (for (i <- 0 until names.size) yield Hero(ids(i), names(i), imageUrls(i))).take(names.length - 1)
     val heroes = zip3(ids toList, names toList, imageUrls toList).map {
       case (id: Int, name: String, url: String) => Hero(id, name, url)
     }.take(names.length - 1)
     heroes.sorted
   }
 
-  // TODO make asynchronous and not ugly
-  // TODO make it save stuff to database
-  def getAll: Seq[Hero] = {
-    def fetchFromUrl(): JsValue = {
+  def persistToDb() {
+    if (!_inDb) {
+      logger.info("Persisting heroes to database.")
       val url = "https://api.steampowered.com/IEconDOTA2_570/GetHeroes/v0001/?key=" + Application.SteamApiKey + "&language=en_us"
       val future = WS.url(url).get()
-      Await.result(future, 15 seconds).json
-    }
 
-    def fetchFromClasspath(): JsValue = {
-      val path = getClass.getClassLoader.getResource(ClasspathFileName).toURI
-      val lines = Files.readAllLines(Paths.get(path), Charset.defaultCharset()).asScala mkString "\n"
-      Json.parse(lines)
-    }
+      future onComplete {
+        case Success(result) =>
+          logger.info(s"Received a result")
+          val json = result.json
+          val heroes = parseJson(json)
+          DB.withSession {
+            implicit session: Session =>
+              for (hero <- heroes) {
+                //logger.info(s"Adding ${hero.name} to database!")
+                h.insert(hero)
+              }
+          }
 
-    if (EnableApiHeroes) {
-      if (fetchedFromApi) {
-        this.allHeroes
+        case Failure(t) =>
+          logger.error("Error when fetching heroes: ", t)
       }
-      else {
-        val heroes = parseJson(fetchFromUrl())
-        this.allHeroes = heroes
-        fetchedFromApi = true
-        heroes
-      }
+      _inDb = true
+
     }
     else {
-      if (fetchedFromFile) {
-        this.allHeroes
-      }
-      else {
-        val heroes = parseJson(fetchFromClasspath())
-        this.allHeroes = heroes
-        fetchedFromFile = true
-        heroes
-      }
+      logger.info("Heroes already in database, doing nothing.")
     }
-
   }
 
   def getForId(id: Int): Option[Hero] = {
-    if(allHeroes == Nil) getAll
-    allHeroes.find(_.id == id)
+    val q = Query(h)
+    DB.withSession {
+      implicit session: Session =>
+        q.filter(_.idCol == id).list().headOption
+    }
   }
 
 }
