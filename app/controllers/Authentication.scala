@@ -1,5 +1,6 @@
 package controllers
 
+import _root_.util.Util
 import play.api.mvc._
 import models._
 
@@ -64,10 +65,18 @@ object Authentication extends Controller {
           //val authSuccess: AuthSuccess = verification.getAuthResponse.asInstanceOf[AuthSuccess]
           val userUrl = verified.getIdentifier
           val steamId64 = userUrl.substring(36, userUrl.length).toLong
-          val steamId32 = (steamId64 - 76561197960265728L).toInt
+          val steamId32 = Util.convertToSteamId32(steamId64)
           logger.debug(s"id url: $userUrl, steamID64: $steamId64, steamId32: $steamId32")
-          val user = User.create(steamId64, steamId32)
-          user.loggedIn = true
+          val userOpt = User.findById(steamId32)
+          // User exists
+          if (userOpt.isDefined) {
+            val user = userOpt.get
+            user.loggedIn = true
+          }
+          else {
+            val user = User.create(steamId32 = steamId32, steamId64 = steamId64)
+            user.loggedIn = true
+          }
 
           Redirect(routes.Restricted.profile()).withSession(Security.username -> steamId32.toString)
 
@@ -85,7 +94,7 @@ object Authentication extends Controller {
     implicit request =>
       session.get(Security.username).foreach {
         id =>
-          User.findById(id.toLong).foreach {
+          User.findById(id.toInt).foreach {
             user =>
               logger.info("Logged out user!")
               user.loggedIn = false

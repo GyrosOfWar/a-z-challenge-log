@@ -4,8 +4,12 @@ import scala.concurrent.{Await, Future}
 import play.api.db.slick.Config.driver.simple._
 import controllers._
 import play.api.libs.ws.WS
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import concurrent.duration._
+import play.api.db.slick.DB
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.Play.current
+import scala.slick.session.Session
+import util.Util
 
 /*
  * User: martin
@@ -42,11 +46,13 @@ case class Users() extends Table[User]("USERS") {
 
   def * = id64 ~ id32 ~ friendlyNameCol <>(User.apply _, User.unapply _)
 
+  val byId = createFinderBy(_.id64)
+
 }
 
 // TODO foreign key in Games
 object User {
-  private var userList = List.empty[User]
+  val u = new Users
 
   private def querySteamApi(steamId: String): Future[String] = {
     val url = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=" + Application.SteamApiKey + "&steamids=" + steamId
@@ -64,16 +70,23 @@ object User {
     // I need to block here because otherwise findById won't succeed
     val result = Await.result(friendlyName, 15 seconds)
     val user = User(steamId64, steamId32, result)
-    userList = user :: userList
+
+    DB.withSession {
+      implicit session: Session =>
+        u.insert(user)
+    }
     user.loggedIn = true
     user
   }
 
-  def findById(steamId32: Long): Option[User] = {
-    userList.find(_.steamId32 == steamId32)
+  def findById(steamId32: Int): Option[User] = {
+    DB.withSession {
+      implicit session: Session =>
+        u.byId(Util.convertToSteamId64(steamId32)).firstOption
+    }
   }
 
-  def isLoggedIn(steamId32: Long): Boolean = {
+  def isLoggedIn(steamId32: Int): Boolean = {
     findById(steamId32) match {
       case Some(user) if user.loggedIn => true
       case _ => false

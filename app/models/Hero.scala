@@ -17,13 +17,15 @@ case class Hero(id: Int, name: String, imageUrl: String) extends Ordered[Hero] {
 }
 
 case class Heroes() extends Table[Hero]("HEROES") {
-  def idCol = column[Int]("HERO_ID")
+  def id = column[Int]("HERO_ID")
 
-  def nameCol = column[String]("HERO_NAME")
+  def name = column[String]("HERO_NAME")
 
-  def imageUrlCol = column[String]("IMAGE_URL")
+  def imageUrl = column[String]("IMAGE_URL")
 
-  def * = idCol ~ nameCol ~ imageUrlCol <>(Hero.apply _, Hero.unapply _)
+  def * = id ~ name ~ imageUrl <>(Hero.apply _, Hero.unapply _)
+
+  val byId = createFinderBy(_.id)
 
 }
 
@@ -60,7 +62,6 @@ object Hero {
           DB.withSession {
             implicit session: Session =>
               for (hero <- heroes) {
-                //logger.info(s"Adding ${hero.name} to database!")
                 h.insert(hero)
               }
           }
@@ -76,11 +77,10 @@ object Hero {
     }
   }
 
-  def getForId(id: Int): Option[Hero] = {
-    val q = Query(h)
+  def findById(id: Int): Option[Hero] = {
     DB.withSession {
       implicit session: Session =>
-        q.filter(_.idCol == id).list().headOption
+        h.byId(id).firstOption
     }
   }
 

@@ -5,11 +5,13 @@ import play.api.db.slick.Config.driver.simple._
 import org.joda.time.DateTime
 import controllers._
 import play.api.libs.ws.WS
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsObject
 import util.Profiling.timedCall
-
 import util.Util.zip3
+import play.api.db.slick.DB
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.Play.current
+import scala.slick.session.Session
 
 /**
  * User: Martin Tomasi
@@ -20,18 +22,21 @@ import util.Util.zip3
 case class Game(matchId: Long, date: DateTime, hero: Hero, details: MatchDetails, win: Boolean)
 
 case class Games() extends Table[(Long, Int, Long)]("GAMES") {
-  def matchIdCol = column[Long]("MATCH_ID")
+  def matchId = column[Long]("MATCH_ID")
 
-  def dateCol = column[Long]("DATE")
+  def date = column[Long]("DATE")
 
-  def heroIdCol = column[Int]("HERO_ID")
+  def heroId = column[Int]("HERO_ID")
 
-  def * = matchIdCol ~ heroIdCol ~ dateCol
+  def * = matchId ~ heroId ~ date
+
+  def byId = createFinderBy(_.matchId)
 }
 
 case class MatchDetails(radiantWon: Boolean, kills: Int, deaths: Int, assists: Int, gpm: Int, xpm: Int)
 
 object Game {
+  val g = new Games
 
   def getMatchDetails(matchId: Long, steamId32: Int): Future[MatchDetails] = {
     val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/V001/?key=${Application.SteamApiKey}&match_id=$matchId"
@@ -83,7 +88,6 @@ object Game {
           val heroIds = players.map {
             p => (p \ "hero_id").as[Short]
           }
-
           val playerSlots = players.map {
             p => (p \ "player_slot").as[Short]
           }
@@ -100,7 +104,7 @@ object Game {
             val (heroId, slot) = ps.collect {
               case (accId: Long, hId: Short, playerSlot: Short) if accId == myId => (hId, playerSlot)
             }.head
-            val hero = Hero.getForId(heroId).getOrElse(throw new IllegalArgumentException("Bad hero!"))
+            val hero = Hero.findById(heroId).getOrElse(throw new IllegalArgumentException("Bad hero!"))
             // Get the match details from the API
             val details = getMatchDetails(matchId, myId)
 
@@ -118,6 +122,13 @@ object Game {
           // Turns a Seq[Future[Game]] into a Future[Seq[Game]]
           Future.sequence(games)
         }
+    }
+  }
+
+  def findById(matchId: Long) = {
+    DB.withSession {
+      implicit session: Session =>
+        g.byId(matchId).firstOption
     }
   }
 

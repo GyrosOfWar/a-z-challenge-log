@@ -17,7 +17,7 @@ object Restricted extends Controller with Secured {
   def profile = IsAuthenticated {
     userId =>
       request =>
-        User.findById(userId.toLong).map {
+        User.findById(userId.toInt).map {
           user =>
             Ok(html.profile(user))
         }.getOrElse(Redirect(routes.Application.index()).flashing("error" -> "You need to login first."))
@@ -52,7 +52,7 @@ trait Secured {
   }
 
   def withUser(f: User => Request[AnyContent] => Result) = IsAuthenticated { userId => implicit request =>
-    User.findById(userId.toLong).map { user =>
+    User.findById(userId.toInt).map { user =>
       f(user)(request)
     }.getOrElse(onUnauthorized(request))
   }

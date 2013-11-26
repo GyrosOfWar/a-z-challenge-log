@@ -15,5 +15,9 @@ object Util {
     zip3$(l1, l2, l3, List[(_, _, _)]())
   }
 
+  def convertToSteamId32(steamId64: Long): Int = (steamId64 - 76561197960265728L).toInt
+
+  def convertToSteamId64(steamId32: Int): Long = steamId32.toLong + 76561197960265728L
+
 
 }
