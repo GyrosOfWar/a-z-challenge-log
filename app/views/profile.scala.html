@@ -2,26 +2,36 @@
 
 @main("Profile", loggedIn = true) {
     <h1>Welcome, @user.friendlyName</h1>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Hero</th>
-                <th>K / D / A</th>
-                <th>GPM</th>
-                <th>XPM</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody>
-        @for(game <- user.games) {
-            <tr>
+    @if(user.hasGames) {
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Win/Loss</th>
+                    <th>Hero</th>
+                    <th><abbr title="Kills, deaths, assists">K / D / A</abbr></th>
+                    <th><abbr title="Gold per minute">GPM</abbr></th>
+                    <th><abbr title="Experience per minute">XPM</abbr></th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(game <- user.games) {
+                <tr>
+                    @if(game.win) {
+                        <td class="text-success">WIN</td>
+                    } else {
+                        <td class="text-danger">LOSS</td>
+                    }
                 <td><img src="@game.hero.imageUrl" height="35px"/> @game.hero.name</td>
                 <td>@game.details.kills / @game.details.deaths / @game.details.assists</td>
                 <td>@game.details.gpm</td>
                 <td>@game.details.xpm</td>
                 <td>@game.date.toLocalDate</td>
-            </tr>
-        }
-        </tbody>
-    </table>
+                </tr>
+            }
+            </tbody>
+        </table>
+    } else {
+        <p>TODO</p>
+    }
 }

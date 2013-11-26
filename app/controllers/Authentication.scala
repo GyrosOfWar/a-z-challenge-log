@@ -10,8 +10,6 @@ import message.ax._
 import discovery.Identifier
 
 import play.api.Logger.logger
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import scala.util.{Failure, Success}
 
 /*
  * User: Martin
@@ -69,13 +67,7 @@ object Authentication extends Controller {
           val steamId32 = (steamId64 - 76561197960265728L).toInt
           logger.debug(s"id url: $userUrl, steamID64: $steamId64, steamId32: $steamId32")
           val user = User.create(steamId64, steamId32)
-          val games = Game.getGamesFor(steamId32)
-          games onComplete {
-            case Success(result) =>
-              user.addGames(result)
-            case Failure(t) =>
-              logger.error("Error: ", t)
-          }
+          user.loggedIn = true
 
           Redirect(routes.Restricted.profile()).withSession(Security.username -> steamId32.toString)
 

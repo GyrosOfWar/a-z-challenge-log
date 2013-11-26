@@ -16,6 +16,8 @@ import concurrent.duration._
 case class User(steamId64: Long, steamId32: Int, friendlyName: String) extends Table[User]("USERS") {
   private var _games = Vector.empty[Game]
 
+  def hasGames = !_games.isEmpty
+
   var loggedIn = false
 
   def id64 = column[Long]("U_ID64", O.PrimaryKey)
