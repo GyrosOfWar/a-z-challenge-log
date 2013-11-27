@@ -23,6 +23,13 @@ object Restricted extends Controller with Secured {
         }.getOrElse(Redirect(routes.Application.index()).flashing("error" -> "You need to login first."))
   }
 
+  // TODO generate JSON for heroes with given heroId and send it back
+  def gamesFor(heroId: Int) = IsAuthenticated {
+    userId =>
+      request =>
+        Ok(s"test test test derp! $heroId")
+  }
+
 }
 
 /**
