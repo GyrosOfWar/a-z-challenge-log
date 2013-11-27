@@ -2,7 +2,7 @@ $(document).ready ->
   # set games table to visible, hide the progress indicator
   # and populate the table with the games
   $.get '/profile/games/102', (json) ->
-    $('#loading-indicator').css 'visibility', 'hidden'
+    $('#loading-indicator').remove()
     $('#selectable-games').css 'visibility', 'visible'
     for game in json
       tableEntry = ""
