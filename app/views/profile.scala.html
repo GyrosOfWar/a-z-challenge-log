@@ -34,13 +34,10 @@
     } else {
         <p>You have no games in your profile yet! Select the game you started your A-Z challenge with and I'll try
             to fill in the rest. You can also choose to select games manually.</p>
-        @*<img id="loading-indicator" src="@routes.Assets.at("images/loading.gif")"/>*@
-        <div class="progress progress-striped active" id="loading-indicator" style="width: 30%; display: block; margin: auto; margin-top: 30%;">
-            <div class="progress-bar" role="progress-bar" aria-valuenow="100"
-            aria-valuemin="100" aria-valuemax="100" style="width: 100%;">
+        <div class="progress progress-striped active" id="loading-indicator">
+            <div class="progress-bar" role="progress-bar" style="width: 100%;">
                 <span class="sr-only">Currently loading.</span>
             </div>
-
         </div>
 
         <table class="table table-hover" id="selectable-games" style="visibility : hidden">

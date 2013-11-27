@@ -43,3 +43,9 @@ body {
 code {
     font-size: 80%;
 }
+
+#loading-indicator {
+    width: 30%;
+    display: block;
+    margin: 15% auto auto;
+}
