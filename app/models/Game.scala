@@ -19,26 +19,61 @@ import scala.slick.session.Session
  * Time: 15:11
  */
 
-case class Game(matchId: Long, date: DateTime, hero: Hero, details: MatchDetails, win: Boolean)
+class Game(val matchId: Long, val date: DateTime, val hero: Hero, val details: MatchDetails)
 
-case class Games() extends Table[(Long, Int, Long)]("GAMES") {
+case class Games() extends Table[Game]("GAMES") {
   def matchId = column[Long]("MATCH_ID")
 
   def date = column[Long]("DATE")
 
   def heroId = column[Int]("HERO_ID")
 
-  def * = matchId ~ heroId ~ date
+  def kills = column[Int]("KILLS")
+
+  def deaths = column[Int]("DEATHS")
+
+  def assists = column[Int]("ASSISTS")
+
+  def gpm = column[Int]("GPM")
+
+  def xpm = column[Int]("XPM")
+
+  def win = column[Boolean]("WIN")
+
+  def * = matchId ~ date ~ heroId ~ kills ~ deaths ~ assists ~ gpm ~ xpm ~ win <>(Game.apply _, Game.unapply _)
 
   def byId = createFinderBy(_.matchId)
 }
 
-case class MatchDetails(radiantWon: Boolean, kills: Int, deaths: Int, assists: Int, gpm: Int, xpm: Int)
+case class MatchDetails(win: Boolean, kills: Int, deaths: Int, assists: Int, gpm: Int, xpm: Int)
 
 object Game {
   val g = new Games
+  /*
+    Used to create a Game object from what's saved in the database
+   */
+  def apply(matchId: Long, date: Long, heroId: Int, kills: Int,
+            deaths: Int, assists: Int, gpm: Int, xpm: Int, win: Boolean): Game = {
+    new Game(
+      matchId,
+      new DateTime(date * 1000L),
+      Hero.findById(heroId).getOrElse(throw new IllegalArgumentException("Bad hero!")),
+      MatchDetails(win, kills, deaths, assists, gpm, xpm)
+    )
+  }
 
-  def getMatchDetails(matchId: Long, steamId32: Int): Future[MatchDetails] = {
+  /*
+    Used to make a Games object to save in the database from a Game object that I get from
+    parsing JSON from the Steam API
+   */
+
+  def unapply(g: Game): Option[(Long, Long, Int, Int, Int, Int, Int, Int, Boolean)] = {
+    // TODO test time conversion
+    Some(g.matchId, g.date.toDate.getTime / 1000L, g.hero.id, g.details.kills,
+      g.details.deaths, g.details.assists, g.details.gpm, g.details.xpm, g.details.win)
+  }
+
+  def getMatchDetails(matchId: Long, steamId32: Int, playerSlot: Int): Future[MatchDetails] = {
     val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/V001/?key=${Application.SteamApiKey}&match_id=$matchId"
     // TODO Fetch match details to find out the winner of the game
     val request = WS.url(url)
@@ -106,17 +141,10 @@ object Game {
             }.head
             val hero = Hero.findById(heroId).getOrElse(throw new IllegalArgumentException("Bad hero!"))
             // Get the match details from the API
-            val details = getMatchDetails(matchId, myId)
+            val details = getMatchDetails(matchId, myId, slot)
 
             details map {
-              d =>
-                val playedRadiant = if (slot < 100) true else false
-                val didIWin = {
-                  if (playedRadiant && d.radiantWon) true
-                  else if (!playedRadiant && !d.radiantWon) true
-                  else false
-                }
-                Game(matchId, new DateTime(startTime * 1000l), hero, d, didIWin)
+              d => new Game(matchId, new DateTime(startTime * 1000L), hero, d)
             }
           }
           // Turns a Seq[Future[Game]] into a Future[Seq[Game]]

@@ -17,7 +17,7 @@
             <tbody>
             @for(game <- user.games) {
                 <tr>
-                    @if(game.win) {
+                    @if(game.details.win) {
                         <td class="text-success">WIN</td>
                     } else {
                         <td class="text-danger">LOSS</td>
