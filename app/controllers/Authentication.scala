@@ -78,7 +78,7 @@ object Authentication extends Controller {
             user.loggedIn = true
           }
 
-          Redirect(routes.Restricted.profile()).withSession(Security.username -> steamId32.toString)
+          Redirect(routes.Profile.profile()).withSession(Security.username -> steamId32.toString)
 
         } else {
           Unauthorized("not valid: [" + verified + "]")

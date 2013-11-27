@@ -16,6 +16,6 @@ GET        /openIDCallback               controllers.Authentication.openIDCallba
 GET        /logout                       controllers.Authentication.logout
 
 # Restricted
-GET        /profile                      controllers.Restricted.profile
+GET        /profile                      controllers.Profile.profile
 
-GET        /profile/games/:heroId        controllers.Restricted.gamesFor(heroId: Int)
+GET        /profile/games/:heroId        controllers.Profile.gamesFor(heroId: Int)

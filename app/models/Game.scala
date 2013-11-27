@@ -5,13 +5,15 @@ import org.joda.time.DateTime
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.json.JsObject
+import play.api.libs.json.{Json, Writes, JsObject}
 import play.api.libs.ws.WS
 import play.api.Play.current
 import scala.concurrent.Future
 import scala.slick.session.Session
 import util.Profiling.timedCall
 import util.Util.zip3
+
+import play.api.Logger.logger
 
 /**
  * User: Martin Tomasi
@@ -47,8 +49,35 @@ case class Games() extends Table[Game]("GAMES") {
 
 case class MatchDetails(win: Boolean, kills: Int, deaths: Int, assists: Int, gpm: Int, xpm: Int)
 
+object MatchDetails {
+  implicit val writesMatchDetails = new Writes[MatchDetails] {
+    override def writes(m: MatchDetails) = {
+      Json.obj(
+        "win" -> m.win,
+        "kills" -> m.kills,
+        "deaths" -> m.deaths,
+        "assists" -> m.assists,
+        "gpm" -> m.gpm,
+        "xpm" -> m.xpm
+      )
+    }
+  }
+}
+
 object Game {
   val g = new Games
+
+  implicit val writesGame = new Writes[Game] {
+    override def writes(g: Game) = {
+      Json.obj(
+        "match_id" -> g.matchId,
+        "date" -> g.date.toDate.getTime / 1000L,
+        "hero" -> g.hero,
+        "details" -> g.details
+      )
+    }
+  }
+
   /*
     Used to create a Game object from what's saved in the database
    */
@@ -75,7 +104,6 @@ object Game {
 
   def getMatchDetails(matchId: Long, steamId32: Int, playerSlot: Int): Future[MatchDetails] = {
     val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/V001/?key=${Application.SteamApiKey}&match_id=$matchId"
-    // TODO Fetch match details to find out the winner of the game
     val request = WS.url(url)
     val future = request.get()
 
@@ -94,7 +122,7 @@ object Game {
         val xpm = (player \ "xp_per_min").as[Int]
         val playedRadiant = playerSlot < 100
         val didIWin = {
-          if(radiantWon && playedRadiant) true
+          if (radiantWon && playedRadiant) true
           else if (!radiantWon && !playedRadiant) true
           else false
         }
@@ -104,9 +132,9 @@ object Game {
   }
 
   // TODO add parameters for start/end date or start/end match id and number of games to fetch
-  // TODO add hero to filter for
   def getGamesFor(steamId32: Int, heroId: Option[Int] = None): Future[Seq[Game]] = {
-    val hero = heroId.map (id => "&hero_id" + id).getOrElse("")
+    val hero = heroId.map(id => "&hero_id=" + id).getOrElse("")
+    logger.info(s"Getting matches for hero $heroId")
     val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/V001/?key=${Application.SteamApiKey}&account_id=$steamId32&game_mode=1" + hero
     val request = WS.url(url)
     val future = request.get()

@@ -6,14 +6,14 @@ import concurrent.Future
 
 import models._
 import views._
-import play.libs.Json
+import play.api.libs.json._
 
 /*
  * User: Martin
  * Date: 13.11.13
  * Time: 20:21
  */
-object Restricted extends Controller with Secured {
+object Profile extends Controller with Secured {
   /**
    * Display restricted area only if user is logged in.
    */
@@ -31,7 +31,7 @@ object Restricted extends Controller with Secured {
     userId =>
       request =>
         val games = Game.getGamesFor(userId.toInt, Some(heroId))
-        games map (g => Ok("todo"))
+        games map (g => Ok(Json.toJson(g)))
   }
 }
 

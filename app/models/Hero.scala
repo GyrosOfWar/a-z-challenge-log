@@ -3,11 +3,10 @@ package models
 import controllers.Application
 import play.api.db.slick.DB
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.json.JsValue
+import play.api.libs.json.{Json, Writes, JsValue}
 import play.api.libs.ws._
 import play.api.Logger.logger
 import play.api.Play.current
-import scala.slick.session.Session
 import scala.util.{Success, Failure}
 import slick.driver.H2Driver.simple._
 import util.Util.zip3
@@ -32,6 +31,16 @@ case class Heroes() extends Table[Hero]("HEROES") {
 object Hero {
   private var _inDb = false
   val h = new Heroes
+
+  implicit val writesHero = new Writes[Hero] {
+    override def writes(h: Hero): JsValue = {
+      Json.obj(
+        "id" -> h.id,
+        "name" -> h.name,
+        "imageUrl" -> h.imageUrl
+      )
+    }
+  }
 
   private def parseJson(json: JsValue): Seq[Hero] = {
     val names = (json \\ "localized_name").map(_.as[String])

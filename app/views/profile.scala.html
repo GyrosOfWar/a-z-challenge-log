@@ -34,6 +34,20 @@
     } else {
         <p>You have no games in your profile yet! Select the game you started your A-Z challenge with and I'll try
         to fill in the rest.</p>
+        <img id="loading-indicator" src="@routes.Assets.at("images/loading.gif")"/>
+        <table class="table table-hover" id="selectable-games" style="visibility: hidden">
+            <thead>
+                <tr>
+                    <th>Win/Loss</th>
+                    <th>Hero</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+
+            </tbody>
+
+        </table>
         @*TODO show all the Abbadon games for the user *@
     }
 }
