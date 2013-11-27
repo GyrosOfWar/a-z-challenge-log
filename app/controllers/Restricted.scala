@@ -1,9 +1,12 @@
 package controllers
 
 import play.api.mvc._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import concurrent.Future
 
 import models._
 import views._
+import play.libs.Json
 
 /*
  * User: Martin
@@ -24,12 +27,12 @@ object Restricted extends Controller with Secured {
   }
 
   // TODO generate JSON for heroes with given heroId and send it back
-  def gamesFor(heroId: Int) = IsAuthenticated {
+  def gamesFor(heroId: Int) = IsAuthenticatedAsync {
     userId =>
       request =>
-        Ok(s"test test test derp! $heroId")
+        val games = Game.getGamesFor(userId.toInt, Some(heroId))
+        games map (g => Ok("todo"))
   }
-
 }
 
 /**
@@ -38,7 +41,7 @@ object Restricted extends Controller with Secured {
 trait Secured {
 
   /**
-   * Retrieve the connected user's email
+   * Retrieve the connected user's user ID.
    */
   private def username(request: RequestHeader) = request.session.get(Security.username)
 
@@ -58,9 +61,9 @@ trait Secured {
     }
   }
 
-  def withUser(f: User => Request[AnyContent] => Result) = IsAuthenticated { userId => implicit request =>
-    User.findById(userId.toInt).map { user =>
-      f(user)(request)
-    }.getOrElse(onUnauthorized(request))
+  def IsAuthenticatedAsync(f: => String => Request[AnyContent] => Future[SimpleResult]) = {
+    Security.Authenticated(username, onUnauthorized) {
+      user => Action.async(request => f(user)(request))
+    }
   }
 }

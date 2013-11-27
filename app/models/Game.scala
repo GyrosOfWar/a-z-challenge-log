@@ -1,17 +1,17 @@
 package models
 
-import scala.concurrent.Future
-import play.api.db.slick.Config.driver.simple._
-import org.joda.time.DateTime
 import controllers._
-import play.api.libs.ws.WS
-import play.api.libs.json.JsObject
-import util.Profiling.timedCall
-import util.Util.zip3
+import org.joda.time.DateTime
+import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick.DB
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.json.JsObject
+import play.api.libs.ws.WS
 import play.api.Play.current
+import scala.concurrent.Future
 import scala.slick.session.Session
+import util.Profiling.timedCall
+import util.Util.zip3
 
 /**
  * User: Martin Tomasi
@@ -92,14 +92,22 @@ object Game {
         val assists = (player \ "assists").as[Int]
         val gpm = (player \ "gold_per_min").as[Int]
         val xpm = (player \ "xp_per_min").as[Int]
-        MatchDetails(radiantWon, kills, deaths, assists, gpm, xpm)
+        val playedRadiant = playerSlot < 100
+        val didIWin = {
+          if(radiantWon && playedRadiant) true
+          else if (!radiantWon && !playedRadiant) true
+          else false
+        }
+
+        MatchDetails(didIWin, kills, deaths, assists, gpm, xpm)
     }
   }
 
   // TODO add parameters for start/end date or start/end match id and number of games to fetch
   // TODO add hero to filter for
-  def getGamesFor(steamId32: Int): Future[Seq[Game]] = {
-    val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/V001/?key=${Application.SteamApiKey}&account_id=$steamId32"
+  def getGamesFor(steamId32: Int, heroId: Option[Int] = None): Future[Seq[Game]] = {
+    val hero = heroId.map (id => "&hero_id" + id).getOrElse("")
+    val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/V001/?key=${Application.SteamApiKey}&account_id=$steamId32&game_mode=1" + hero
     val request = WS.url(url)
     val future = request.get()
     val myId = steamId32

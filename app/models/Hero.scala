@@ -1,16 +1,16 @@
 package models
 
 import controllers.Application
-import play.api.libs.json.JsValue
-import play.api.libs.ws._
-import slick.driver.H2Driver.simple._
-import util.Util.zip3
-import scala.util.{Success, Failure}
-import play.api.Logger.logger
 import play.api.db.slick.DB
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.json.JsValue
+import play.api.libs.ws._
+import play.api.Logger.logger
 import play.api.Play.current
 import scala.slick.session.Session
+import scala.util.{Success, Failure}
+import slick.driver.H2Driver.simple._
+import util.Util.zip3
 
 case class Hero(id: Int, name: String, imageUrl: String) extends Ordered[Hero] {
   def compare(that: Hero): Int = this.name.compare(that.name)
