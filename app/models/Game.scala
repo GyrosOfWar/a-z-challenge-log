@@ -21,10 +21,12 @@ import play.api.Logger.logger
  * Time: 15:11
  */
 
-class Game(val matchId: Long, val date: DateTime, val hero: Hero, val details: MatchDetails)
+class Game(val matchId: Long, val date: DateTime, val hero: Hero, val details: MatchDetails) {
+  override def toString = s"matchId: $matchId $date $hero"
+}
 
 case class Games() extends Table[Game]("GAMES") {
-  def matchId = column[Long]("MATCH_ID")
+  def matchId = column[Long]("MATCH_ID", O.PrimaryKey)
 
   def date = column[Long]("DATE")
 
@@ -47,6 +49,22 @@ case class Games() extends Table[Game]("GAMES") {
   def byId = createFinderBy(_.matchId)
 }
 
+case class GameToUser() extends Table[(Long, Long)]("GAME_TO_USER") {
+  def matchId = column[Long]("GAME_ID")
+
+  def userId64 = column[Long]("USER_ID64")
+
+  def gameFK = foreignKey("GAME_FK", matchId, Game.g)(_.matchId)
+
+  def userFK = foreignKey("USER_FK", userId64, User.u)(_.id64)
+
+  def * = matchId ~ userId64
+}
+
+object GameToUser {
+  val gtu = new GameToUser()
+}
+
 case class MatchDetails(win: Boolean, kills: Int, deaths: Int, assists: Int, gpm: Int, xpm: Int)
 
 object MatchDetails {
@@ -66,6 +84,7 @@ object MatchDetails {
 
 object Game {
   val g = new Games
+  private var _cache = List.empty[Game]
 
   implicit val writesGame = new Writes[Game] {
     override def writes(g: Game) = {
@@ -78,8 +97,9 @@ object Game {
     }
   }
 
-  /*
-    Used to create a Game object from what's saved in the database
+  def cache = _cache
+
+  /* Used to create a Game object from what's saved in the database
    */
   def apply(matchId: Long, date: Long, heroId: Int, kills: Int,
             deaths: Int, assists: Int, gpm: Int, xpm: Int, win: Boolean): Game = {
@@ -91,9 +111,8 @@ object Game {
     )
   }
 
-  /*
-    Used to make a Games object to save in the database from a Game object that I get from
-    parsing JSON from the Steam API
+  /* Used to make a Games object to save in the database from a Game object that I get from
+     parsing JSON from the Steam API
    */
 
   def unapply(g: Game): Option[(Long, Long, Int, Int, Int, Int, Int, Int, Boolean)] = {
@@ -102,7 +121,7 @@ object Game {
       g.details.deaths, g.details.assists, g.details.gpm, g.details.xpm, g.details.win)
   }
 
-  def getMatchDetails(matchId: Long, steamId32: Int, playerSlot: Int): Future[MatchDetails] = {
+  private def getMatchDetails(matchId: Long, steamId32: Int, playerSlot: Int): Future[MatchDetails] = {
     val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/V001/?key=${Application.SteamApiKey}&match_id=$matchId"
     val request = WS.url(url)
     val future = request.get()
@@ -132,6 +151,7 @@ object Game {
   }
 
   // TODO add parameters for start/end date or start/end match id and number of games to fetch
+  // TODO cache results
   def getGamesFor(steamId32: Int, heroId: Option[Int] = None): Future[Seq[Game]] = {
     val hero = heroId.map(id => "&hero_id=" + id).getOrElse("")
     logger.info(s"Getting matches for hero $heroId")
@@ -181,7 +201,11 @@ object Game {
             val details = getMatchDetails(matchId, myId, slot)
 
             details map {
-              d => new Game(matchId, new DateTime(startTime * 1000L), hero, d)
+              d =>
+                val game = new Game(matchId, new DateTime(startTime * 1000L), hero, d)
+                _cache = _cache :+ game
+                game
+
             }
           }
           // Turns a Seq[Future[Game]] into a Future[Seq[Game]]
@@ -195,6 +219,27 @@ object Game {
       implicit session: Session =>
         g.byId(matchId).firstOption
     }
+  }
+
+  def save(game: Game) {
+    DB.withSession {
+      implicit session: Session =>
+        logger.info(s"Added game $game to database.")
+        g.insert(game)
+    }
+  }
+
+  def gamesFromDb(steamId32: Int): Seq[Game] = {
+    /*    DB.withSession {
+          implicit session: Session =>
+            val q = Query(GameToUser.gtu)
+            for {
+              g <- q
+              (userId, matchId) = g.
+              if userId == steamId32
+            } yield Game.findById(matchId)
+        }*/
+    ???
   }
 
 }

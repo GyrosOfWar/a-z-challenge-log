@@ -19,3 +19,5 @@ GET        /logout                       controllers.Authentication.logout
 GET        /profile                      controllers.Profile.profile
 
 GET        /profile/games/:heroId        controllers.Profile.gamesFor(heroId: Int)
+
+GET        /profile/games                controllers.Profile.allGames

@@ -26,12 +26,17 @@ object Profile extends Controller with Secured {
         }.getOrElse(Redirect(routes.Application.index()).flashing("error" -> "You need to login first."))
   }
 
-  // TODO generate JSON for heroes with given heroId and send it back
   def gamesFor(heroId: Int) = IsAuthenticatedAsync {
     userId =>
       request =>
         val games = Game.getGamesFor(userId.toInt, Some(heroId))
         games map (g => Ok(Json.toJson(g)))
+  }
+
+  def allGames = IsAuthenticated {
+    userId =>
+      request =>
+        Ok("")
   }
 }
 
@@ -61,6 +66,11 @@ trait Secured {
     }
   }
 
+  /**
+   * Asynchronous action for authenticated users.
+   * @param f Action
+   * @return Action to perform
+   */
   def IsAuthenticatedAsync(f: => String => Request[AnyContent] => Future[SimpleResult]) = {
     Security.Authenticated(username, onUnauthorized) {
       user => Action.async(request => f(user)(request))
