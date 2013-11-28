@@ -18,21 +18,7 @@ import util.Util
  */
 
 case class User(steamId64: Long, steamId32: Int, friendlyName: String) {
-  private var _games = Vector.empty[Game]
-
-  def hasGames = !_games.isEmpty
-
   var loggedIn = false
-
-  def games = _games
-
-  def addGame(g: Game) {
-    _games = _games :+ g
-  }
-
-  def addGames(gs: Seq[Game]) {
-    _games = _games ++ gs
-  }
 }
 
 case class Users() extends Table[User]("USERS") {
@@ -40,7 +26,7 @@ case class Users() extends Table[User]("USERS") {
 
   def id32 = column[Int]("U_ID32")
 
-  //def games = foreignKey("MATCH_ID", id, Game)(g: Game => g.)
+  def games = GameToUser.gtu.filter(_.userId64 == id64).flatMap(_.gameFK)
 
   def friendlyNameCol = column[String]("U_NAME")
 
@@ -90,6 +76,22 @@ object User {
     findById(steamId32) match {
       case Some(user) if user.loggedIn => true
       case _ => false
+    }
+  }
+
+  def addGame(u: User, g: Game) {
+    DB.withSession {
+      Game.g.insert(g)
+      GameToUser.gtu.insert(g.matchId, u.steamId64)
+    }
+  }
+
+  def addGames(u: User, gs: Seq[Game]) {
+    DB.withSession {
+      for(g <- gs) {
+        Game.g.insert(g)
+        GameToUser.gtu.insert(g.matchId, u.steamId64)
+      }
     }
   }
 }

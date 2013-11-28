@@ -12,7 +12,6 @@ import scala.concurrent.Future
 import scala.slick.session.Session
 import util.Profiling.timedCall
 import util.Util.zip3
-
 import play.api.Logger.logger
 
 /**
@@ -45,6 +44,8 @@ case class Games() extends Table[Game]("GAMES") {
   def win = column[Boolean]("WIN")
 
   def * = matchId ~ date ~ heroId ~ kills ~ deaths ~ assists ~ gpm ~ xpm ~ win <>(Game.apply _, Game.unapply _)
+
+  def users = GameToUser.gtu.filter(_.matchId == matchId).flatMap(_.userFK)
 
   def byId = createFinderBy(_.matchId)
 }
