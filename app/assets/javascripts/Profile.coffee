@@ -1,29 +1,37 @@
 $(document).ready ->
   # set games table to visible, hide the progress indicator
   # and populate the table with the games
-  getGames()
+  populateProfile()
 
-getGames = ->
+# Populates the table on the profile page
+# with games or, if no games are there,
+# shows the user a list of games to select as
+# his first game.
+populateProfile = ->
   $.get '/profile/hasGames', (bool) ->
-    # If player has games, get all of them and put them in the table
-    if bool == "true"
-      getGamesFor(-1)
-    # Else, put the games with Abbadon in
+    if bool == 'true'
+      # If player has games, get all of them and put them in the table
+      getGames
     else
-      getGamesFor(102)
+      # Else, put the games with Abbadon in
+      getGames 102
 
-getGamesFor = (heroId) ->
-  url = "/profile/games"
+getGames = (heroId = -1) ->
+  url = '/profile/games'
   if heroId != -1
     url += "/#{heroId}"
+  # Queries the API for the games with the given hero (or all of them)
   $.get url, (json) ->
     $('#loading-indicator').remove()
     if heroId != -1
-      $("#first-time-text").css 'visibility', 'visible'
-    $('#selectable-games').css 'visibility', 'visible'
-    for entry in makeTableEntries(json)
+      cssHide '#first-time-text'
+    cssShow '#selectable-games'
+
+    tableEntries = makeTableEntry(game) for game in json
+    for entry in tableEntries
       $('#table-body').append entry
 
+# Builds up one entry of the table in the user's profile.
 makeTableEntry = (game) ->
   tableEntry = "<tr>"
   if game.details.win
@@ -36,5 +44,8 @@ makeTableEntry = (game) ->
   tableEntry += "</tr>"
   tableEntry
 
-makeTableEntries = (json) ->
-  makeTableEntry(game) for game in json
+cssHide = (selector) ->
+  $(selector).css 'visibility', 'hidden'
+
+cssShow = (selector) ->
+  $(selector).css 'visibility', 'visible'

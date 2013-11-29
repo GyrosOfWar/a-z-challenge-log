@@ -10,22 +10,10 @@ import play.api.Play.current
 import scala.util.{Success, Failure}
 import slick.driver.H2Driver.simple._
 import util.Util.zip3
+import models.database.Heroes
 
 case class Hero(id: Int, name: String, imageUrl: String) extends Ordered[Hero] {
   def compare(that: Hero): Int = this.name.compare(that.name)
-}
-
-case class Heroes() extends Table[Hero]("HEROES") {
-  def id = column[Int]("HERO_ID")
-
-  def name = column[String]("HERO_NAME")
-
-  def imageUrl = column[String]("IMAGE_URL")
-
-  def * = id ~ name ~ imageUrl <>(Hero.apply _, Hero.unapply _)
-
-  val byId = createFinderBy(_.id)
-
 }
 
 object Hero {

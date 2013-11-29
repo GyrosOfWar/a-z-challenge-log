@@ -10,6 +10,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.current
 import scala.slick.session.Session
 import util.Util
+import models.database._
+import play.api.Logger.logger
 
 /*
  * User: martin
@@ -21,20 +23,6 @@ case class User(steamId64: Long, steamId32: Int, friendlyName: String) {
   var loggedIn = false
 }
 
-case class Users() extends Table[User]("USERS") {
-  def id64 = column[Long]("U_ID64", O.PrimaryKey)
-
-  def id32 = column[Int]("U_ID32")
-
-  def games = GameToUser.gtu.filter(_.userId64 == id64).flatMap(_.gameFK)
-
-  def friendlyNameCol = column[String]("U_NAME")
-
-  def * = id64 ~ id32 ~ friendlyNameCol <>(User.apply _, User.unapply _)
-
-  val byId = createFinderBy(_.id64)
-
-}
 
 // TODO foreign key in Games
 object User {
@@ -77,7 +65,9 @@ object User {
   def findById(steamId32: Int): Option[User] = {
     DB.withSession {
       implicit session: Session =>
-        u.byId(Util.convertToSteamId64(steamId32)).firstOption
+        val user = u.byId(Util.convertToSteamId64(steamId32)).firstOption
+        logger.info(s"FindById: user.loggedIn = ${user.getOrElse("Not a valid user!")}")
+        user
     }
   }
 
