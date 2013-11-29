@@ -222,14 +222,6 @@ object Game {
     }
   }
 
-  def save(game: Game) {
-    DB.withSession {
-      implicit session: Session =>
-        logger.info(s"Added game $game to database.")
-        g.insert(game)
-    }
-  }
-
   def gamesFromDb(steamId32: Int): Seq[Game] = {
     /*    DB.withSession {
           implicit session: Session =>

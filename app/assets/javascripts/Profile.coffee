@@ -18,7 +18,7 @@ makeTableEntry = (game) ->
   tableEntry += "<td><img height=\"35px\" src=\"#{game.hero.imageUrl}\" /> #{game.hero.name}</td>"
   tableEntry += "<td>#{dateString}</td>"
   tableEntry += "</tr>"
-  return tableEntry
+  tableEntry
 
 makeTableEntries = (json) ->
   makeTableEntry(game) for game in json

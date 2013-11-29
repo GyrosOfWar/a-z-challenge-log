@@ -65,6 +65,10 @@ object User {
     user
   }
 
+  def hasGames(user: User ) = {
+
+  }
+
   def findById(steamId32: Int): Option[User] = {
     DB.withSession {
       implicit session: Session =>
@@ -81,17 +85,19 @@ object User {
 
   def addGame(u: User, g: Game) {
     DB.withSession {
-      Game.g.insert(g)
-      GameToUser.gtu.insert(g.matchId, u.steamId64)
+      implicit session: Session =>
+        Game.g.insert(g)
+        GameToUser.gtu.insert(g.matchId, u.steamId64)
     }
   }
 
   def addGames(u: User, gs: Seq[Game]) {
     DB.withSession {
-      for(g <- gs) {
-        Game.g.insert(g)
-        GameToUser.gtu.insert(g.matchId, u.steamId64)
-      }
+      implicit session: Session =>
+        for (g <- gs) {
+          Game.g.insert(g)
+          GameToUser.gtu.insert(g.matchId, u.steamId64)
+        }
     }
   }
 }
