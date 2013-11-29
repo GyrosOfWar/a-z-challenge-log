@@ -65,7 +65,12 @@ object User {
     user
   }
 
-  def hasGames(user: User ) = {
+  def hasGames(user: User): Boolean = {
+    DB.withSession {
+      implicit session: Session =>
+        val query = Query(User.u)
+        query.flatMap(_.games).list.length > 0
+    }
 
   }
 
@@ -76,6 +81,7 @@ object User {
     }
   }
 
+  /* This works, but I don't know why. */
   def isLoggedIn(steamId32: Int): Boolean = {
     findById(steamId32) match {
       case Some(user) if user.loggedIn => true
@@ -83,21 +89,29 @@ object User {
     }
   }
 
-  def addGame(u: User, g: Game) {
+  def addGame(user: User, g: Game) {
     DB.withSession {
       implicit session: Session =>
         Game.g.insert(g)
-        GameToUser.gtu.insert(g.matchId, u.steamId64)
+        GameToUser.gtu.insert(g.matchId, user.steamId64)
     }
   }
 
-  def addGames(u: User, gs: Seq[Game]) {
+  def addGames(user: User, gs: Seq[Game]) {
     DB.withSession {
       implicit session: Session =>
         for (g <- gs) {
           Game.g.insert(g)
-          GameToUser.gtu.insert(g.matchId, u.steamId64)
+          GameToUser.gtu.insert(g.matchId, user.steamId64)
         }
+    }
+  }
+
+  def findGames(user: User): Seq[Game] = {
+    DB.withSession {
+      implicit session: Session =>
+        val query = Query(User.u)
+        query.flatMap(_.games).list
     }
   }
 }

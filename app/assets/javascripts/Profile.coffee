@@ -1,12 +1,28 @@
 $(document).ready ->
   # set games table to visible, hide the progress indicator
   # and populate the table with the games
-  $.get '/profile/games/102', (json) ->
+  getGames()
+
+getGames = ->
+  $.get '/profile/hasGames', (bool) ->
+    # If player has games, get all of them and put them in the table
+    if bool == "true"
+      getGamesFor(-1)
+    # Else, put the games with Abbadon in
+    else
+      getGamesFor(102)
+
+getGamesFor = (heroId) ->
+  url = "/profile/games"
+  if heroId != -1
+    url += "/#{heroId}"
+  $.get url, (json) ->
     $('#loading-indicator').remove()
+    if heroId != -1
+      $("#first-time-text").css 'visibility', 'visible'
     $('#selectable-games').css 'visibility', 'visible'
     for entry in makeTableEntries(json)
-      $("#table-body").append entry
-
+      $('#table-body').append entry
 
 makeTableEntry = (game) ->
   tableEntry = "<tr>"

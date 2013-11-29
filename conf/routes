@@ -21,3 +21,5 @@ GET        /profile                      controllers.Profile.profile
 GET        /profile/games/:heroId        controllers.Profile.gamesFor(heroId: Int)
 
 GET        /profile/games                controllers.Profile.allGames
+
+GET        /profile/hasGames             controllers.Profile.hasGames

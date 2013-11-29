@@ -36,7 +36,22 @@ object Profile extends Controller with Secured {
   def allGames = IsAuthenticated {
     userId =>
       request =>
-        Ok("")
+        val user = User.findById(userId.toInt).getOrElse(throw new IllegalArgumentException("Bad user!"))
+        val games = User.findGames(user)
+        Ok(Json.toJson(games))
+  }
+
+  def hasGames = IsAuthenticated {
+    userId =>
+      request =>
+      // TODO make this a separate function
+        val user = User.findById(userId.toInt).getOrElse(throw new IllegalArgumentException("bad hero!"))
+        if (User.hasGames(user)) {
+          Ok("true")
+        }
+        else {
+          Ok("false")
+        }
   }
 }
 
