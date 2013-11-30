@@ -48,7 +48,7 @@ object Hero {
     heroes.sorted
   }
 
-  private def getHeroesFromFile() = {
+  private def getHeroesFromFile = {
     import play.api.Play.current
     val fp = Play.getFile("conf/heroes.json")
     Files.readFile(fp)
@@ -79,7 +79,7 @@ object Hero {
         _inDb = true
       }
       else {
-        val heroes = parseJson(Json.parse(getHeroesFromFile()))
+        val heroes = parseJson(Json.parse(getHeroesFromFile))
         DB.withSession {
           implicit session: Session =>
             for (hero <- heroes) {

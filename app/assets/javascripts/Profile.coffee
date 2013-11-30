@@ -21,7 +21,7 @@ getGames = (heroId = -1) ->
   if heroId != -1
     url += "/#{heroId}"
   # Queries the API for the games with the given hero (or all of them)
-  $.get url, (json) ->
+  jqXHR = $.get url, (json) ->
     $('#loading-indicator').remove()
     if heroId != -1
       cssHide '#first-time-text'
@@ -29,6 +29,14 @@ getGames = (heroId = -1) ->
 
     for entry in makeTableEntries json
       $('#table-body').append entry
+  jqXHR.fail (data) ->
+    $('#loading-indicator').remove()
+    if heroId != -1
+      cssHide '#first-time-text'
+    cssShow '#error-append'
+    $('#error-append').append(
+      "<p class=\"alert alert-danger\">" +
+      "An error occurred querying the Steam API. Please try again later.</p>")
 
 # Builds up one entry of the table in the user's profile.
 makeTableEntry = (game) ->

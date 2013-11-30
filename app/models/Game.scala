@@ -117,8 +117,17 @@ object Game {
     val request = WS.url(url)
     val future: Future[Response] = request.get()
     val myId = steamId32
+
+    future.onFailure {
+      case e: Exception => logger.error("Error reaching the Steam API.", e)
+    }
+
     future flatMap {
       v =>
+        if (v.status == 500) {
+          logger.error("Internal server error in the Steam API response.")
+        }
+
         val json = v.json \ "result"
         val matches = (json \ "matches").as[List[JsObject]]
         val matchIds = matches.map {
