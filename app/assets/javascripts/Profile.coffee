@@ -1,6 +1,4 @@
 $(document).ready ->
-  # set games table to visible, hide the progress indicator
-  # and populate the table with the games
   populateProfile()
 
 # Populates the table on the profile page
@@ -29,6 +27,7 @@ getGames = (heroId = -1) ->
 
     for entry in makeTableEntries json
       $('#table-body').append entry
+  # If there is an error with querying the Steam API, display an error message.
   jqXHR.fail (data) ->
     $('#loading-indicator').remove()
     if heroId != -1

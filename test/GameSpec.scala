@@ -10,7 +10,7 @@ import org.specs2.mutable.Specification
 class GameSpec extends Specification {
   "A game" should {
     "be convertible to a database Game" in {
-    "test" must have size 4
+      "test" must have size 4
     }
   }
   // TODO write tests

@@ -63,7 +63,7 @@ trait Secured {
   /**
    * Retrieve the connected user's user ID.
    */
-  private def username(request: RequestHeader) = request.session.get(Security.username)
+  private def userId(request: RequestHeader) = request.session.get(Security.username)
 
   /**
    * Not authorized, forward to login
@@ -76,7 +76,7 @@ trait Secured {
    * Action for authenticated users.
    */
   def IsAuthenticated(f: => String => Request[AnyContent] => Result) = {
-    Security.Authenticated(username, onUnauthorized) {
+    Security.Authenticated(userId, onUnauthorized) {
       user => Action(request => f(user)(request))
     }
   }
@@ -87,7 +87,7 @@ trait Secured {
    * @return Action to perform
    */
   def IsAuthenticatedAsync(f: => String => Request[AnyContent] => Future[SimpleResult]) = {
-    Security.Authenticated(username, onUnauthorized) {
+    Security.Authenticated(userId, onUnauthorized) {
       user => Action.async(request => f(user)(request))
     }
   }

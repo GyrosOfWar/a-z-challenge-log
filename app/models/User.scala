@@ -23,8 +23,6 @@ case class User(steamId64: Long, steamId32: Int, friendlyName: String) {
   var loggedIn = false
 }
 
-
-// TODO foreign key in Games
 object User {
   val u = new Users
 
@@ -32,11 +30,11 @@ object User {
     val url = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=" + Application.SteamApiKey + "&steamids=" + steamId
     val holder = WS.url(url)
     val requestFuture = holder.get()
-    val personaName = requestFuture.map {
-      f => (f.json \\ "personaname").map(_.as[String]).head
+    requestFuture.map {
+      f =>
+        if (f.status == 500) logger.error("An error occurred in querying the Steam API.")
+        (f.json \\ "personaname").map(_.as[String]).head
     }
-
-    personaName
   }
 
   def create(steamId64: Long, steamId32: Int): User = {
