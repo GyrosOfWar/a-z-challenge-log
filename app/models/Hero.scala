@@ -11,12 +11,15 @@ import scala.util.{Success, Failure}
 import slick.driver.H2Driver.simple._
 import util.Util.zip3
 import models.database.Heroes
+import play.api.Play
+import play.api.libs.Files
 
 case class Hero(id: Int, name: String, imageUrl: String) extends Ordered[Hero] {
   def compare(that: Hero): Int = this.name.compare(that.name)
 }
 
 object Hero {
+  private val _fetchFromApi = false
   private var _inDb = false
   val h = new Heroes
 
@@ -45,29 +48,45 @@ object Hero {
     heroes.sorted
   }
 
+  private def getHeroesFromFile() = {
+    import play.api.Play.current
+    val fp = Play.getFile("conf/heroes.json")
+    Files.readFile(fp)
+  }
+
   def persistToDb() {
     if (!_inDb) {
       logger.info("Persisting heroes to database.")
-      val url = "https://api.steampowered.com/IEconDOTA2_570/GetHeroes/v0001/?key=" + Application.SteamApiKey + "&language=en_us"
-      val future = WS.url(url).get()
+      if (_fetchFromApi) {
+        val url = "https://api.steampowered.com/IEconDOTA2_570/GetHeroes/v0001/?key=" + Application.SteamApiKey + "&language=en_us"
+        val future = WS.url(url).get()
 
-      future onComplete {
-        case Success(result) =>
-          logger.info(s"Received a result")
-          val json = result.json
-          val heroes = parseJson(json)
-          DB.withSession {
-            implicit session: Session =>
-              for (hero <- heroes) {
-                h.insert(hero)
-              }
-          }
+        future onComplete {
+          case Success(result) =>
+            logger.info(s"Hero.persistToDatabase: Received a result from the Steam API.")
+            val json = result.json
+            val heroes = parseJson(json)
+            DB.withSession {
+              implicit session: Session =>
+                for (hero <- heroes) {
+                  h.insert(hero)
+                }
+            }
 
-        case Failure(t) =>
-          logger.error("Error when fetching heroes: ", t)
+          case Failure(t) =>
+            logger.error("Error when fetching heroes: ", t)
+        }
+        _inDb = true
       }
-      _inDb = true
-
+      else {
+        val heroes = parseJson(Json.parse(getHeroesFromFile()))
+        DB.withSession {
+          implicit session: Session =>
+            for (hero <- heroes) {
+              h.insert(hero)
+            }
+        }
+      }
     }
     else {
       logger.info("Heroes already in database, doing nothing.")

@@ -27,8 +27,7 @@ getGames = (heroId = -1) ->
       cssHide '#first-time-text'
     cssShow '#selectable-games'
 
-    tableEntries = makeTableEntry(game) for game in json
-    for entry in tableEntries
+    for entry in makeTableEntries json
       $('#table-body').append entry
 
 # Builds up one entry of the table in the user's profile.
@@ -49,3 +48,6 @@ cssHide = (selector) ->
 
 cssShow = (selector) ->
   $(selector).css 'visibility', 'visible'
+
+makeTableEntries = (json) ->
+  makeTableEntry(game) for game in json

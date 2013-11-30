@@ -41,7 +41,9 @@ object User {
 
   def create(steamId64: Long, steamId32: Int): User = {
     val friendlyName = querySteamApi(steamId64.toString)
-    // I need to block here because otherwise findById won't succeed
+    // I need to block for the result of the future
+    // here because otherwise findById won't succeed
+    // There's probably a better solution for this though
     val result = Await.result(friendlyName, 15 seconds)
     val user = User(steamId64, steamId32, result)
 
@@ -66,7 +68,8 @@ object User {
     DB.withSession {
       implicit session: Session =>
         val user = u.byId(Util.convertToSteamId64(steamId32)).firstOption
-        logger.info(s"FindById: user.loggedIn = ${user.getOrElse("Not a valid user!")}")
+        logger.info(s"User.findById: User = ${user.toString}")
+        logger.info(s"User.findById: user.loggedIn = ${user.getOrElse("Not a valid user!")}")
         user
     }
   }
