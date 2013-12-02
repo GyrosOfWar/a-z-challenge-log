@@ -42,7 +42,7 @@ object MatchDetails {
 
 object Game {
   val g = new Games
-  private var _cache = List.empty[Game]
+  private var _cache = Map.empty[Int, Vector[Game]]
 
   implicit val writesGame = new Writes[Game] {
     override def writes(g: Game) = {
@@ -108,9 +108,23 @@ object Game {
     }
   }
 
+  private def checkCache(steamId32: Int, heroId: Option[Int] = None): Option[Seq[Game]] = {
+    _cache.get(steamId32) flatMap {
+      games => heroId.map {
+        id => games.filter(_.hero.id == id)
+      }
+    }
+  }
+
   // TODO add parameters for start/end date or start/end match id and number of games to fetch
   // TODO cache results
   def getGamesFor(steamId32: Int, heroId: Option[Int] = None): Future[Seq[Game]] = {
+    val cached = checkCache(steamId32, heroId)
+    cached match {
+      case Some(games) => Future(games)
+      case None =>
+    }
+
     val hero = heroId.map(id => "&hero_id=" + id).getOrElse("")
     logger.info(s"Getting matches for hero $heroId")
     val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/V001/?key=${Application.SteamApiKey}&account_id=$steamId32&game_mode=1" + hero
@@ -168,9 +182,9 @@ object Game {
           details map {
             d =>
               val game = new Game(matchId, new DateTime(startTime * 1000L), hero, d)
-              _cache = _cache :+ game
+              val buf = _cache.get(myId).getOrElse(Vector.empty[Game]) :+ game
+              _cache += steamId32 -> buf
               game
-
           }
         }
         // Turns a Seq[Future[Game]] into a Future[Seq[Game]]
