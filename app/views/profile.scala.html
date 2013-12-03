@@ -1,4 +1,4 @@
-@(user: User)
+@(user: User, form: Form[Int])
 
 @main("Profile", loggedIn = true) {
     <h1>Welcome, @user.friendlyName!</h1>
@@ -12,9 +12,12 @@
     </div>
     <span id="error-append" style="visibility: hidden"></span>
 
+    @helper.form(action = controllers.Profile.addGame)
+
     <table class="table table-hover" id="selectable-games" style="visibility: hidden">
         <thead>
             <tr>
+                <th>Selected</th>
                 <th>Win/Loss</th>
                 <th>Hero</th>
                 <th>Date</th>

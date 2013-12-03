@@ -7,6 +7,8 @@ import concurrent.Future
 import models._
 import views._
 import play.api.libs.json._
+import play.api.data._
+import play.api.data.Forms._
 
 /*
  * User: Martin
@@ -14,6 +16,10 @@ import play.api.libs.json._
  * Time: 20:21
  */
 object Profile extends Controller with Secured {
+  val form = Form(
+    single("selected" -> number)
+  )
+
   /**
    * Display restricted area only if user is logged in.
    */
@@ -22,8 +28,20 @@ object Profile extends Controller with Secured {
       request =>
         User.findById(userId.toInt).map {
           user =>
-            Ok(html.profile(user))
+            Ok(html.profile(user, form))
         }.getOrElse(Redirect(routes.Application.index()).flashing("error" -> "You need to login first."))
+  }
+
+  def addGame = IsAuthenticated {
+    userId =>
+      request =>
+        val user = User.findById(userId.toInt).getOrElse(throw new IllegalArgumentException("Bad user!"))
+        form.fold(
+          formWithErrors => BadRequest(html.profile(user, formWithErrors)),
+          data =>
+            User.addGame(user, Game.findById(data).getOrElse(throw new Exception("bad game")))
+            Ok(html.profile(user, form))
+        )
   }
 
   def gamesFor(heroId: Int) = IsAuthenticatedAsync {

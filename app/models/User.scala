@@ -19,9 +19,7 @@ import play.api.Logger.logger
  * Time: 2:43 PM
  */
 
-case class User(steamId64: Long, steamId32: Int, friendlyName: String) {
-  var loggedIn = false
-}
+case class User(steamId64: Long, steamId32: Int, friendlyName: String)
 
 object User {
   val u = new Users
@@ -49,7 +47,6 @@ object User {
       implicit session: Session =>
         u.insert(user)
     }
-    user.loggedIn = true
     user
   }
 
@@ -66,14 +63,6 @@ object User {
     DB.withSession {
       implicit session: Session =>
         u.byId(Util.convertToSteamId64(steamId32)).firstOption
-    }
-  }
-
-  /* This works, but I don't know why. */
-  def isLoggedIn(steamId32: Int): Boolean = {
-    findById(steamId32) match {
-      case Some(user) if user.loggedIn => true
-      case _ => false
     }
   }
 

@@ -71,11 +71,9 @@ object Authentication extends Controller {
           // User exists
           if (userOpt.isDefined) {
             val user = userOpt.get
-            user.loggedIn = true
           }
           else {
             val user = User.create(steamId32 = steamId32, steamId64 = steamId64)
-            user.loggedIn = true
           }
 
           Redirect(routes.Profile.profile()).withSession(Security.username -> steamId32.toString)
@@ -92,14 +90,6 @@ object Authentication extends Controller {
 
   def logout = Action {
     implicit request =>
-      session.get(Security.username).foreach {
-        id =>
-          User.findById(id.toInt).foreach {
-            user =>
-              logger.info("Logged out user!")
-              user.loggedIn = false
-          }
-      }
       Redirect(routes.Application.index).withNewSession
   }
 }
