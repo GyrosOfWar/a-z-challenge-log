@@ -9,6 +9,7 @@ import views._
 import play.api.libs.json._
 import play.api.data._
 import play.api.data.Forms._
+import play.api.Logger.logger
 
 /*
  * User: Martin
@@ -37,10 +38,13 @@ object Profile extends Controller with Secured {
       request =>
         val user = User.findById(userId.toInt).getOrElse(throw new IllegalArgumentException("Bad user!"))
         form.fold(
-          formWithErrors => BadRequest(html.profile(user, formWithErrors)),
-          data =>
-            User.addGame(user, Game.findById(data).getOrElse(throw new Exception("bad game")))
+          badForm => BadRequest(html.profile(user, badForm)),
+          matchId => {
+            val game = Game.findById(matchId).getOrElse(throw new IllegalArgumentException("Bad game!"))
+            logger.info(game.toString)
+            User.addGame(user, game)
             Ok(html.profile(user, form))
+          }
         )
   }
 
@@ -73,40 +77,3 @@ object Profile extends Controller with Secured {
   }
 }
 
-/**
- * Provide security features
- */
-trait Secured {
-
-  /**
-   * Retrieve the connected user's user ID.
-   */
-  private def userId(request: RequestHeader) = request.session.get(Security.username)
-
-  /**
-   * Not authorized, forward to login
-   */
-  private def onUnauthorized(request: RequestHeader) = {
-    Results.Redirect(routes.Application.index).flashing("error" -> "You need to login first.")
-  }
-
-  /**
-   * Action for authenticated users.
-   */
-  def IsAuthenticated(f: => String => Request[AnyContent] => Result) = {
-    Security.Authenticated(userId, onUnauthorized) {
-      user => Action(request => f(user)(request))
-    }
-  }
-
-  /**
-   * Asynchronous action for authenticated users.
-   * @param f Action
-   * @return Action to perform
-   */
-  def IsAuthenticatedAsync(f: => String => Request[AnyContent] => Future[SimpleResult]) = {
-    Security.Authenticated(userId, onUnauthorized) {
-      user => Action.async(request => f(user)(request))
-    }
-  }
-}

@@ -24,6 +24,8 @@ getGames = (heroId = -1) ->
     if heroId != -1
       cssHide '#first-time-text'
     cssShow '#selectable-games'
+    cssShow "#rb-form"
+    cssShow "#submit-button"
 
     for entry in makeTableEntries json
       $('#table-body').append entry
@@ -40,6 +42,10 @@ getGames = (heroId = -1) ->
 # Builds up one entry of the table in the user's profile.
 makeTableEntry = (game) ->
   tableEntry = "<tr>"
+  tableEntry += "<td>"
+  tableEntry += makeRadioButton "rb", "#{game.matchId}"
+  tableEntry += "</td>"
+
   if game.details.win
     tableEntry += "<td class=\"text-success\">WIN</td>"
   else
@@ -58,3 +64,6 @@ cssShow = (selector) ->
 
 makeTableEntries = (json) ->
   makeTableEntry(game) for game in json
+
+makeRadioButton = (name, id) ->
+  "<input type=\"radio\" name=\"#{name}\" id=\"#{id}\" value=\"\" />"

@@ -1,30 +1,47 @@
 @(user: User, form: Form[Int])
 
-@main("Profile", loggedIn = true) {
-    <h1>Welcome, @user.friendlyName!</h1>
-    <p id="first-time-text" style="visibility : hidden">
-        You have no games in your profile yet! Select the game you started your A-Z challenge with and I'll try
-        to fill in the rest. You can also choose to select games manually.</p>
-    <div class="progress progress-striped active" id="loading-indicator">
-        <div class="progress-bar" role="progress-bar" style="width: 100%">
-            <span class="sr-only">Currently loading.</span>
+    @main("Profile", loggedIn = true) {
+        <h1>Welcome, @user.friendlyName!</h1>
+        <p id="first-time-text" style="visibility : hidden">
+            You have no games in your profile yet! Select the game you started your A-Z challenge with and I'll try
+            to fill in the rest. You can also choose to select games manually.</p>
+        <div class="progress progress-striped active" id="loading-indicator">
+            <div class="progress-bar" role="progress-bar" style="width : 100 %">
+                <span class="sr-only">Currently loading.</span>
+            </div>
         </div>
-    </div>
-    <span id="error-append" style="visibility: hidden"></span>
+        <span id="error-append" style="visibility : hidden"></span>
 
-    @helper.form(action = controllers.Profile.addGame)
+        @helper.form(routes.Profile.addGame, '_id -> "rb-form", '_style -> "visibility: hidden") {
 
-    <table class="table table-hover" id="selectable-games" style="visibility: hidden">
-        <thead>
-            <tr>
-                <th>Selected</th>
-                <th>Win/Loss</th>
-                <th>Hero</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody id="table-body">
+            <table class="table table-hover" id="selectable-games" style="visibility : hidden">
+                <thead>
+                    <tr>
+                        <th>Selected</th>
+                        <th>Win/Loss</th>
+                        <th>Hero</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr>
+                        <td>
+                            <input type="radio" value="@form("selected").value" />
+                        </td>
+                        <td>Sample</td>
+                        <td>Sample</td>
+                        <td>Sample</td>
+                    </tr>
+                    @* This is where the matches are appended to *@
+                </tbody>
+            </table>
 
-        </tbody>
-    </table>
-}
+            <button type="button"
+            class="btn btn-primary"
+            id="submit-button"
+            type="submit"
+            style="visibility : hidden">
+                Submit
+            </button>
+        }
+    }
