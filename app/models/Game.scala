@@ -120,75 +120,74 @@ object Game {
   // TODO cache results
   def getGamesFor(steamId32: Int, heroId: Option[Int] = None): Future[Seq[Game]] = {
     val cached = checkCache(steamId32, heroId)
-    cached match {
-      case Some(games) => Future(games)
-      case None =>
-    }
+    if (cached.isDefined) {
+      Future(cached.get)
+    } else {
+      val hero = heroId.map(id => "&hero_id=" + id).getOrElse("")
+      logger.info(s"Getting matches for hero $heroId")
+      val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/V001/?key=${Application.SteamApiKey}&account_id=$steamId32&game_mode=1" + hero
+      val request = WS.url(url)
+      val future: Future[Response] = request.get()
+      val myId = steamId32
 
-    val hero = heroId.map(id => "&hero_id=" + id).getOrElse("")
-    logger.info(s"Getting matches for hero $heroId")
-    val url = s"https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/V001/?key=${Application.SteamApiKey}&account_id=$steamId32&game_mode=1" + hero
-    val request = WS.url(url)
-    val future: Future[Response] = request.get()
-    val myId = steamId32
+      future.onFailure {
+        case e: Exception => logger.error("Error reaching the Steam API.", e)
+      }
 
-    future.onFailure {
-      case e: Exception => logger.error("Error reaching the Steam API.", e)
-    }
-
-    future flatMap {
-      v =>
-        if (v.status == 500) {
-          logger.error("Internal server error in the Steam API response.")
-        }
-
-        val json = v.json \ "result"
-        val matches = (json \ "matches").as[List[JsObject]]
-        val matchIds = matches.map {
-          obj => (obj \ "match_id").as[Int]
-        }
-        val startTimes = matches.map {
-          obj => (obj \ "start_time").as[Long]
-        }
-        val players = matches.flatMap {
-          obj => (obj \ "players").as[List[JsObject]]
-        }
-        val accountIds = players.map {
-          p => (p \ "account_id").as[Long]
-        }
-        val heroIds = players.map {
-          p => (p \ "hero_id").as[Short]
-        }
-        val playerSlots = players.map {
-          p => (p \ "player_slot").as[Short]
-        }
-
-        val matchTuples = matchIds.zip(startTimes)
-        val playerTuples = zip3(accountIds.toList, heroIds.toList, playerSlots.toList)
-        // build Game objects from the JSON data
-        val games = for (i <- 0 until matchTuples.length) yield {
-          val (matchId, startTime) = matchTuples(i)
-          val start = i * 10
-          val end = start + 10
-          val ps = playerTuples.slice(start, end)
-          // find the hero ID and player slot for the given player
-          val (heroId, slot) = ps.collect {
-            case (accId: Long, hId: Short, playerSlot: Short) if accId == myId => (hId, playerSlot)
-          }.head
-          val hero = Hero.findById(heroId).getOrElse(throw new IllegalArgumentException("Bad hero!"))
-          // Get the match details from the API
-          val details = getMatchDetails(matchId, myId, slot)
-
-          details map {
-            d =>
-              val game = new Game(matchId, new DateTime(startTime * 1000L), hero, d)
-              val buf = _cache.get(myId).getOrElse(Vector.empty[Game]) :+ game
-              _cache += steamId32 -> buf
-              game
+      future flatMap {
+        v =>
+          if (v.status == 500) {
+            logger.error("Internal server error in the Steam API response.")
           }
-        }
-        // Turns a Seq[Future[Game]] into a Future[Seq[Game]]
-        Future.sequence(games)
+
+          val json = v.json \ "result"
+          val matches = (json \ "matches").as[List[JsObject]]
+          val matchIds = matches.map {
+            obj => (obj \ "match_id").as[Int]
+          }
+          val startTimes = matches.map {
+            obj => (obj \ "start_time").as[Long]
+          }
+          val players = matches.flatMap {
+            obj => (obj \ "players").as[List[JsObject]]
+          }
+          val accountIds = players.map {
+            p => (p \ "account_id").as[Long]
+          }
+          val heroIds = players.map {
+            p => (p \ "hero_id").as[Short]
+          }
+          val playerSlots = players.map {
+            p => (p \ "player_slot").as[Short]
+          }
+
+          val matchTuples = matchIds.zip(startTimes)
+          val playerTuples = zip3(accountIds.toList, heroIds.toList, playerSlots.toList)
+          // build Game objects from the JSON data
+          val games = for (i <- 0 until matchTuples.length) yield {
+            val (matchId, startTime) = matchTuples(i)
+            val start = i * 10
+            val end = start + 10
+            val ps = playerTuples.slice(start, end)
+            // find the hero ID and player slot for the given player
+            val (heroId, slot) = ps.collect {
+              case (accId: Long, hId: Short, playerSlot: Short) if accId == myId => (hId, playerSlot)
+            }.head
+            val hero = Hero.findById(heroId).getOrElse(throw new IllegalArgumentException("Bad hero!"))
+            // Get the match details from the API
+            val details = getMatchDetails(matchId, myId, slot)
+
+            details map {
+              d =>
+                val game = new Game(matchId, new DateTime(startTime * 1000L), hero, d)
+                val buf = _cache.get(myId).getOrElse(Vector.empty[Game]) :+ game
+                _cache += steamId32 -> buf
+                game
+            }
+          }
+          // Turns a Seq[Future[Game]] into a Future[Seq[Game]]
+          Future.sequence(games)
+      }
     }
   }
 

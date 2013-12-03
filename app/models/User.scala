@@ -65,10 +65,7 @@ object User {
   def findById(steamId32: Int): Option[User] = {
     DB.withSession {
       implicit session: Session =>
-        val user = u.byId(Util.convertToSteamId64(steamId32)).firstOption
-        logger.info(s"User.findById: User = ${user.toString}")
-        logger.info(s"User.findById: user.loggedIn = ${user.getOrElse("Not a valid user!")}")
-        user
+        u.byId(Util.convertToSteamId64(steamId32)).firstOption
     }
   }
 

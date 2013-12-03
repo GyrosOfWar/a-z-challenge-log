@@ -1,5 +1,5 @@
 import org.specs2.mutable.Specification
-import models.{MatchDetails, Hero, Game, User}
+import models._
 import play.api.test._
 import play.api.test.Helpers._
 import org.joda.time.DateTime
