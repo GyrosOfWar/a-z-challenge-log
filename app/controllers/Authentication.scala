@@ -25,7 +25,7 @@ object Authentication extends Controller {
 
   def login = Action {
     implicit request =>
-      val authReq = manager.authenticate(discovered, routes.Authentication.openIDCallback().absoluteURL(false))
+      val authReq = manager.authenticate(discovered, routes.Authentication.openIDCallback().absoluteURL(secure = false))
       val params = FetchRequest.createFetchRequest()
       params.addAttribute("email", "http://axschema.org/contact/email", true)
       params.addAttribute("namePerson", "http://axschema.org/namePerson", true)

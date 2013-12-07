@@ -38,7 +38,10 @@ object Profile extends Controller with Secured {
       request =>
         val user = User.findById(userId.toInt).getOrElse(throw new IllegalArgumentException("Bad user!"))
         form.fold(
-          badForm => BadRequest(html.profile(user, badForm)),
+          badForm => {
+            logger.info(badForm.toString)
+            BadRequest(html.profile(user, badForm))
+          },
           matchId => {
             val game = Game.findById(matchId).getOrElse(throw new IllegalArgumentException("Bad game!"))
             logger.info(game.toString)
@@ -58,9 +61,10 @@ object Profile extends Controller with Secured {
   def allGames = IsAuthenticated {
     userId =>
       request =>
-        val user = User.findById(userId.toInt).getOrElse(throw new IllegalArgumentException("Bad user!"))
-        val games = User.findGames(user)
-        Ok(Json.toJson(games))
+        User.findById(userId.toInt) match {
+          case Some(user) => Ok(Json.toJson(User.findGames(user)))
+          case None => BadRequest("Not a valid user!")
+        }
   }
 
   def hasGames = IsAuthenticated {
